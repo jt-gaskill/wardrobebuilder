@@ -59,7 +59,9 @@ export default function SideBar({setLoadedCanv, currentName, setCurrentName, get
                 if(editName){
                     setNameEditor(currentName);
                 } else {
-                    if(!nameEditor.includes("Untitled") && nameEditor.length > 2){
+                    var hasNumber = /\d/;
+
+                    if(!nameEditor.includes("Untitled") && nameEditor.length > 2 && !hasNumber.test(nameEditor)){
                         const result = await getWardrobe(nameEditor);
                         if(result == "dne"){
                             setCurrentName(nameEditor);
@@ -69,6 +71,8 @@ export default function SideBar({setLoadedCanv, currentName, setCurrentName, get
                     } else {
                         if(nameEditor.length <= 2){
                             alert("pick a longer name")
+                        } else if (hasNumber.test(nameEditor)){
+                            alert("name cannot contain numbers")
                         } else {
                             alert("do not use default name")
                         }

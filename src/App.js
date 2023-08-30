@@ -3,12 +3,13 @@ import MainCanvas from "./components/MainCanvas.js"
 import SideBar from "./components/SideBar.js"
 import TopBar from './components/TopBar';
 import React from 'react';
-import {db, functions} from './firebase-config'
+import {db, functions, storage} from './firebase-config'
 import {doc, deleteDoc, setDoc, getDoc} from "firebase/firestore";
 import {httpsCallable} from "firebase/functions";
 import MainBody from './components/MainBody';
 import {fabric} from "fabric";
 import { act } from 'react-dom/test-utils';
+import {getDownloadURL, listAll, ref, uploadBytes, uploadString} from 'firebase/storage'
 
 function App() {
 
@@ -40,7 +41,23 @@ function App() {
     }
 
     const saveWardrobe = async () => {
-        await setDoc(doc(db, "wardrobes", currentName), canvasRef.current.toJSON());
+        // console.log(canvasRef.current.toJSON())
+        var tosave = canvasRef.current.toJSON()
+        var i=0;
+        for(i=0; i<tosave["objects"].length; i++){
+            const imageRef = ref(storage, currentName+"/"+String(i))
+            await uploadString(imageRef, tosave["objects"][i]["src"], 'data_url')
+            .then((snapshot) => {
+                // getDownloadURL(imageRef).then((url) => {
+                //     console.log(url)
+                // })
+                // console.log(snapshot)
+                tosave["objects"][i]["src"] = currentName+"/"+String(i)
+            })
+        }
+        // console.log(tosave)
+        // await setDoc(doc(db, "wardrobes", currentName), canvasRef.current.toJSON());
+        await setDoc(doc(db, "wardrobes", currentName), tosave)
     }
 
     // prevents any other object from being selected while cropping
@@ -151,7 +168,7 @@ function App() {
                 canvasRef.current.add(croppingRect.current);
                 canvasRef.current.requestRenderAll();
             } else {
-                console.log(croppedImg.current)
+                // console.log(croppedImg.current)
                 const cropBox = croppingRect.current.getBoundingRect();
                 const imgBox = croppedImg.current.getBoundingRect();
                 const temp = croppedImg.current.toDataURL({
@@ -182,9 +199,29 @@ function App() {
         
     }
 
+    function uploadImage() {
+        const imageRef = ref(storage, 'foldertest/firsttest') // second arg is path of image
+        // uploadBytes(imageRef, "").then(() => { // second arg is whatever you are uploading
+        uploadString(imageRef, "booyah").then(() => {
+            alert("uploaded")
+        })
+    }
+
+    function getimg() {
+        const imageListRef = ref(storage, 'foldertest/')
+        listAll(imageListRef).then((response) => {
+            response.items.forEach((item) => {
+                getDownloadURL(item).then((url) => {
+                    // console.log(url)
+                })
+            })
+        })
+    }
+
 
     return (
         <div className="flex p-0">
+            {/* <button onClick={getimg}>Upload image</button> */}
             <SideBar setLoadedCanv={setLoadedCanv} currentName={currentName} setCurrentName={setCurrentName} getWardrobe={getWardrobe} saveWardrobe={saveWardrobe} remove={remove} isCropping={isCropping} cropx={cropx} activeImg={activeImg} />
             <MainBody canvasRef={canvasRef} addWardrobe={addWardrobe} getWardrobe={getWardrobe} loadedCanv={loadedCanv} setCurrentName={setCurrentName} currentName={currentName} autoCrop={autoCrop} setAutoCrop={setAutoCrop}/>
         </div>

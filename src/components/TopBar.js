@@ -18,7 +18,7 @@ export default function TopBar({setUri, autoCrop, setAutoCrop, uri}) {
 
     const imgAdded = (e) => {
         
-        console.log(e)
+        // console.log(e)
         const inputElem = document.getElementById('myImg')
         const file = inputElem.files[0]
         // console.log(inputElem.files[0])
